@@ -161,3 +161,20 @@ Running "terraform plan" will show you what going to be apply in your infrastruc
 If you do only "terraform apply" i.e. shortcut then this will do "terraform plan -out file; terraform apply file; rm file". 
 You will not going to know the the type of changes happened and the changes you apply recently. 
 
+If you do only "terraform apply" i.e. use this shortcut then it will apply like "terraform plan -out file; terraform apply file; rm file". You will not going to know the the type of changes you apply or last hostory of changes.
+
+*** DO NOT *** Apply "terraform destroy" directly in the Production, it will destroy/terminate all the resources in your Infrastructure.
+
+
+### Variables in Terraform:
+
+* Everything in one file is not great.
+* Use variables to *Hide Secret*
+  * Your AWS credential should not be in the git repository.
+  * so that variables mentioned in the files should not be committed in the git repo.
+* Use variables for elements that *might change*
+  * AMI's are different per region.
+* Use variables to make it yourself easier to re-use terraform file.
+
+
+
