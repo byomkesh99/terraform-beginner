@@ -183,7 +183,7 @@ File: Script.sh
     # make sure nginx is started
     service nginx start
 
-File: terrsform.tfvars (This file should share in PUBLIC. I shared the dummy one)
+File: terrsform.tfvars (This file should **NOT** share in PUBLIC. I shared the false one for understanding)
 
     AWS_ACCESS_KEY = "AKJKDNWKSMLL235K3"
     AWS_SECRET_KEY = "ekjfwecwnbwjfo384kfnewflwfwefjwelkj"
