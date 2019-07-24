@@ -51,6 +51,7 @@ Now we spin up new EC2 instance by using terraform.
 We need one IAM user (system-admin or network-admin role is enough, not require AdministratorAccess) for "Access Key" and "Secret Access Key" to kickstart EC2 instance.
 I have created one user call tform given role of "network-admin". Use this link to know different Job Function "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html".
 
+Example-1
 This is the sample TF file to spin up EC2.
 
       provider "aws" {
@@ -67,9 +68,9 @@ This is the sample TF file to spin up EC2.
 Now put the Access Key, Secret Access Key, Region you wanted to put, ami-id and then run the following command:
 
 * terraform init     # when every there is change in your conf file you must run this "init" command
-* terraform apply -out out.terraform      # spin up EC2 instance, it will take some time
-* terraform plan     # See the changes 
-* terraform destroy     # destroy the EC2 instance, i.e. terminating EC2 in this case.
+* terraform plan -out out.terraform      # See the changes
+* terraform apply out.terraform          # spin up EC2 instance, it will take some time
+* terraform destroy                      # destroy the EC2 instance, i.e. terminating EC2 in this case.
 
 See the bellow out of terraform plan. 
 
@@ -154,14 +155,9 @@ See the bellow out of terraform plan.
         
         ------------------------------------------------------------------------
 
-Note: You didn't specify an "-out" parameter to save this plan, so Terraform can't guarantee that exactly these actions will be performed if "terraform apply" is subsequently run.
+If you do only "terraform apply" i.e. apply shortcut then this will do "terraform plan -out file; terraform apply file; rm file". You will not going to know the the type of changes you did in a recent change.
 
-Running "terraform plan" will show you what going to be apply in your infrastructure, the only change to be apply when ever you do some changes. But always run "terraform apply -out terraform.out" which basically re-directing the output. This is recommanded and help you know the changes.
-
-If you do only "terraform apply" i.e. shortcut then this will do "terraform plan -out file; terraform apply file; rm file". 
-You will not going to know the the type of changes happened and the changes you apply recently. 
-
-If you do only "terraform apply" i.e. use this shortcut then it will apply like "terraform plan -out file; terraform apply file; rm file". You will not going to know the the type of changes you apply or last hostory of changes.
+So always do "terraform init; terraform plan -out out.terraform; terraform apply out.terraform"
 
 *** DO NOT *** Apply "terraform destroy" directly in the Production, it will destroy/terminate all the resources in your Infrastructure.
 
@@ -176,5 +172,37 @@ If you do only "terraform apply" i.e. use this shortcut then it will apply like 
   * AMI's are different per region.
 * Use variables to make it yourself easier to re-use terraform file.
 
+If you look at above mentioned Example-1 file then you will see "provider" & "resource" type mentioned in single file.
+Now we are separating them below:
 
+Resource Details: instance.tf
+		
+      resource "aws_instance" "example" {
+		  ami           = "${lookup(var.AMIS, var.AWS_REGION)}"
+		  instance_type = "t2.micro"
+		}
+
+Provider Details: provider.tf
+
+    provider "aws" {
+		    access_key = "${var.AWS_ACCESS_KEY}"
+		    secret_key = "${var.AWS_SECRET_KEY}"
+		    region = "${var.AWS_REGION}"
+	  }
+
+Variables: vars.tf (The real credential details).
+
+    variable "AWS_ACCESS_KEY" {}  # {} means no values here
+	 variable "AWS_SECRET_KEY" {}
+	 variable "AWS_REGION" { default = "eu-west-1" } # Here values mentioned as region
+	 variable "AMIS" {
+		  type = "map"
+		  default = {
+		    us-east-1 = "ami-13be557e"
+		    us-west-2 = "ami-06b94666"
+		    eu-west-1 = "ami-0d729a60"
+		  }
+		}
+
+Note: Always keep vars.tf under .gitignore file so that you avoid to pass the real creds to Public
 
