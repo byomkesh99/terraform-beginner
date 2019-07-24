@@ -190,19 +190,37 @@ Provider Details: provider.tf
 		    region = "${var.AWS_REGION}"
 	  }
 
-Variables: vars.tf (The real credential details).
+Variables: vars.tf
 
     variable "AWS_ACCESS_KEY" {}  # {} means no values here
 	 variable "AWS_SECRET_KEY" {}
-	 variable "AWS_REGION" { default = "eu-west-1" } # Here values mentioned as region
+	 variable "AWS_REGION" { default = "ap-south-1" } # Here values mentioned as region
 	 variable "AMIS" {
 		  type = "map"
 		  default = {
-		    us-east-1 = "ami-13be557e"
-		    us-west-2 = "ami-06b94666"
-		    eu-west-1 = "ami-0d729a60"
+		    ap-south-1 = "ami-0d2692b6acea72ee6"
+		    us-east-1 = "ami-035b3c7efe6d061d5
+		    us-west-1 = "ami-068670db424b01e9a"
 		  }
 		}
 
-Note: Always keep vars.tf under .gitignore file so that you avoid to pass the real creds to Public
+Real Values: terraform.tfvrs
 
+    AWS_ACCESS_KEY = ""		# Here we will mention the real values of access key
+    AWS_SECRET_KEY = ""		# Here we will mention the real values of secret access key
+    AWS_REGION = ""		# If we mention nothing/remove this line then default Region pick from vars.tf file
+    				# Or you can mention the specific region
+
+
+Note: Always keep terraform.tfvrs under .gitignore file so that you avoid to pass the real creds to Public
+
+FOI: https://cloud-images.ubuntu.com/locator/ - All Ubuntu AMI images details. In search type "aws <your region>"
+     your region = ap-south-1 or us-east-1 or us-west-1 ... etc.
+	
+Once the above configuration part done, the do the following to start/stop ec2 instance
+
+    $ terraform init
+    $ terraform plan -out out.terraform	 # out.terraform - is a binary file
+    $ terraform apply out.terraform	 # It takes time to start EC2 isnatnce
+    $ terraform show			 # it will display all details which we see in the description part of EC2 Dashboard.
+    $ terraform destroy			 # Terminate the EC2 in your infrastructure
