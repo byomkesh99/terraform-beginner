@@ -189,3 +189,77 @@ File: terrsform.tfvars (This file should **NOT** share in PUBLIC. I shared the f
     AWS_SECRET_KEY = "ekjfwecwnbwjfo384kfnewflwfwefjwelkj"
     
 If everything fine, then hit the new EC2 Public IP in browser and you will see the welcome page of NGINX
+
+
+### Creating Windows Instance 
+(I will fillup this part later on)
+
+
+### Outputting attributes:
+
+* Terraform keeps **attributes** of all the **resources** you create.
+  * e.g. the **aws_instance** resource has the **attribute public_ip**
+* Those attributes can be **queried** & **outputted**
+* This can be useful just to output valuable information or to feed information to external software.
+* Use "output" to display the public IP address of an AWS resource:
+
+      resource "aws_instance" "example" {
+        ami = "${lookup(var.AMIS, var.AWS_REGION)}"
+        instance_type = "t2.micro"
+      }
+      output "ip" {
+        value = "${aws_instance.example.public_ip}"
+      }
+      
+* You can refer to any attribute by specifying the following elements in your variable:
+  * The resource type: aws_instance
+  * The resource name: example
+  * The attribute name: public_ip
+  
+Refer Terraform Documenation section for lists of attributes.
+
+* You can also use the attributes in a script to get the private IP's in your local box:
+
+      resource "aws_instance" "example" {
+          ami = "${lookup(var.AMIS, var.AWS_REGION)}"
+          instance_type = "t2.micro"
+          provisioner "local-exec" {
+	    command = "echo ${aws_instance.example.private_ip} >> private_ips.txt"
+          }
+      }
+* Useful for instance to start automation script after infrastructure provisioning.
+* You can populate the IP addresses in an **Ansible host** file
+* OR another possibility: execute a script (with attributes as argument) which will take care of a **mapping**
+  of resource name and the IP address.
+  
+Lets spin up 1 EC2 instance and see the output. vars.tf/provider.tf/terraform.tfvars file will be same as above.
+
+File: instance.tf (with output_attribute files)
+
+      resource "aws_instance" "example" {
+        ami = "${lookup(var.AMIS, var.AWS_REGION)}"
+        instance_type = "t2.micro"
+        provisioner "local-exec" {
+           command = "echo ${aws_instance.example.private_ip} >> private_ips.txt"   ## Redirected Private IP file
+        }
+      }
+      output "ip" {
+        value = "${aws_instance.example.public_ip}"
+      }
+      
+Output: It will look like as below.. ..
+
+      aws_instance.example (local-exec): Executing: ["/bin/sh" "-c" "echo 172.31.23.159 >> private_ips.txt"]
+      aws_instance.example: Creation complete after 32s [id=i-0a18c4d930172fbc8]
+
+      Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+
+      Outputs:
+
+      ip = 13.234.59.204
+      [tuser@baspa outputting_Attributes]$ ls
+      instance.tf  private_ips.txt  provider.tf  terraform.tfstate  terraform.tfvars  vars.tf
+      [tuser@baspa outputting_Attributes]$ cat private_ips.txt  (This file can be use as inventory in Ansible)
+      172.31.23.159
+
+      
