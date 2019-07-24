@@ -188,4 +188,4 @@ File: terrsform.tfvars (This file should **NOT** share in PUBLIC. I shared the f
     AWS_ACCESS_KEY = "AKJKDNWKSMLL235K3"
     AWS_SECRET_KEY = "ekjfwecwnbwjfo384kfnewflwfwefjwelkj"
     
-If everything fine the hit the new EC2 Public IP in browser and you will see the welcome page of NGNIX
+If everything fine, then hit the new EC2 Public IP in browser and you will see the welcome page of NGINX
