@@ -263,3 +263,81 @@ Output: It will look like as below.. ..
       172.31.23.159
 
       
+### Remote State:
+
+* Terraform keeps the **remote state** of the infrastructure.
+* It stores it in a file call **terraform.tfstate**.
+* There is also backup of the previous state in **terraform.tfstate.backup**
+* When you execute terraform **apply**, a new terraform.tfstate and backup is written.
+* This is how terraform **keep track** of the remote state.
+  * If the remote state changes and you hit terraform apply again, terraform will make changes to meet the **correct remote state** again.
+  * e.g. you **terminate** an instance that is managed by terraform, after terraform apply it will be started again.
+* You can keep the terraform.tfstate in **version control** e.g. Git.
+* It gives you a **History** of your terraform.tfstate file (which is just a BIG JSON file).
+* It allows you to collaborate with other team members.
+  * Unfortulately (2 user in git) you can get conflicts when 2 people work at the same time, but pull the master file then push.
+* Local state works well in the beginning, but when your project becomes bigger, you might want to store your state **Remote**.
+* The **terraform state** can be saved remote, using **backend** functionality in terraform.
+* The default is a **local backend** (the local terraform state filre).
+* Other backend includes:
+  * **S3** (with a locking machanism using dynamoDB)
+  * **Consul** (with locking)
+  * **terraform enterprise** (the commercial solution)
+* Using the backend functionality has definately benefits:
+  * Working in a team: it allows for **collaboration**, the remote state will be **available** for the whole team.
+  * The state file is not stored locally. Possible **sensitive information** is now only stored in the remote state.
+  * Some backends will enable **remote operations**. The terraform apply will then run completely remote. These are called **Enhenced Backends**, Refer: https://www.terraform.io/docs/backends/types/index.html 
+* There are 2 steps to configure a remote state:
+  * Add the backend code to a .tf file.
+  * Run the initialization process.
+  
+* To configure a consul remote store, you can add a file backend.tf with the followings
+ 
+        terraform{
+          backend "consul"{
+	    address = "demo.consul.io"  # hostname of consul cluster
+	    path = "terraform/mypriject"
+	  }
+        }
+* You can also store your state in S3:
+
+          terraform {
+	    backend "s3"{
+	      bucket = "mybucket"
+	      key = "terraform/myproject"
+	      region = "ap-south-1"
+	    }
+	  }
+	  
+* When using an S3 remote state, it's best to configure the AWS credential using CLI.
+
+        $ aws configure
+	  AWS Access Key ID []: AWS Keys
+	  AWS Secret Access Key []: AWS_Secret_Access_Key
+	  Default regon name []: ap-south-1
+	  Default output format [None]:
+	  
+* Next step, $ terraform init <-|   # It will ask for region if not mentioned in the file.
+
+* Using a **remote store** for the terraform state it will ensure that you always have a **latest version** of the state.
+* It avoids having to **commit** and **push** the terraform.tfstate to to version control.
+* Terraform remote stores don't always support **locking**
+  * The documentation always mentions if loacking is available for remote store.
+* S3 and Consul supports it.
+* You can also specify a (read-only) remote store directly in the .tf file.
+
+          data "terraform_remote_state" "aws-state" {
+	    backend = "s3"
+	    config {
+	      bucket = "terraform-state"
+	      key = "terraform.tfstate"
+	      access_key = "${var.AWS_ACCESS_KEY}"
+	      secret_key = "${var.AWS_SECRET_KEY}"
+	      region = "${var.AWS_REGION}"
+	    }
+	  }
+* This is only useful as a read only feed from your remote file. Its data source
+* Useful to generate outputs.
+
+
+
