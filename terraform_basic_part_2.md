@@ -339,5 +339,222 @@ Output: It will look like as below.. ..
 * This is only useful as a read only feed from your remote file. Its data source
 * Useful to generate outputs.
 
+**Lets Do the practical which will be coping state file remote S3 bucket**
+
+Steps:
+1) Crate a S3 bucket, in this I have given name "terraformstate99"
+2) In you Terraform Host activate AWS CLI.
+
+       $ aws configure
+         AWS Access Key ID []: AWS Keys
+         AWS Secret Access Key []: AWS_Secret_Access_Key
+         Default regon name []: ap-south-1
+         Default output format [None]:
+3) Create a file call "backend.tf" and then run terraform init - plan - apply, and then at last destroy.
+   You can copy the content of **remote_State** directory attached in this Repo and can run it. Here is sample of backend.tf.
+   
+        terraform {
+	   backend "s3" {
+	   bucket = "terraformstate99"		# My S3 bucket name
+	   key = "terraformfolder/tfstatefile"  # new folder and state file inside "terraformstate99" bucket
+	   region = "ap-south-1"		# If you do not mention region then while "terraform init" it will ask region
+	   }
+         }
+
+
+### Data Sources:
+
+* For certain providers (like AWS), terraform provides datasources.
+* Datasources provide you with dynamic information.
+* A lot of data is available by AWS in a structured format using their API
+* Terraform also exposes this information using data sources.
+* Example:
+  * List of AMIs
+  * List of availability Zones.
+* Another great example is the datasource that gives you all IP addresses **in use** by AWS.
+* This is great if you want to filter traffic based on an AWS region.
+  * e.g. allow all traffic from amazon instance in Europe.
+* Filtering traffic in AWS can be done using **security group**
+  * Incoming and outgoing traffic can be filtered by protocol like TCP, UDP, ICMP etc. IP range and port.
+  * Similar to IP Tables or a firewall appliances.
+  
+Example: Filtering European Traffic.
+
+       data "aws_ip_ranges" "european_ec2"{
+	  regions = ["eu-west-1", "eu-central-1"]
+	  services = ["ec2"]
+       }
+
+        resource "aws_security_group" "from_europe" {
+	   name = "from_europe"
+
+	   ingress {
+	      from_port = "443"
+	      to_port = "443"
+	      protocol = "tcp"
+	      cidr_blocks = ["${data.aws_ip_ranges.european_ec2.cidr_blocks}"]
+	   }
+
+	   tags {
+		CreateDate = "${data.aws_ip_ranges.european_ec2.create_date}"
+		SyncToken = "${data.aws_ip_ranges.european_ec2.sync_token}"
+	    }
+        }
+Ref Link of Data Source: https://www.terraform.io/docs/providers/aws/
+
+**You can try it, code uploaded in the directory call dataSources in this Repo** . And then check our SG inbound list & Tags.
+
+
+### Template provider:
+
+* The template provider can help creating **customized configuration files**
+* You can build templates based on variables from terraform resource attributes (e.g. a public IP addresses)
+* The result is a string that can be used as a variable in terraform.
+  * The string contains a templete.
+  * e.g. a configuration file
+* This can be used to create generic templates or cloud init configs.
+* In AWS, you can pass commands that need to be executed when the instance starts for first time.
+* In AWS, thisis called "user-data"
+* If you want to pass user-data that depends on other info in terraform (e.g. IP addresses), you can use the provider template.
+* There's a seperate section on userdata in this course. It will come under section "Terraform with AWS"
+
+* First you create a template file:
+
+        #!/bin/bash
+        echo "database-ip = ${myip}" >> /etc/myapp.config
+	
+* Then you create a template_file resource that will read the template file and replace ${myip} with the IP Address of an AWS instance created by terraform.
+
+        data "template_file" "my-template" {
+	  template = "${file(templates/init.tpl)}"
+	  
+	  vars {
+	    myip = "${aws_instance.database1.private_ip}"
+	  }
+        }
+
+* Then you can use the my-template resource when creating a new instance
+          
+	  Create a web server
+	  resource "aws_instance" "web"{
+	    # ...
+	    user_data = "${data.template_file.mytemplate.rendered}"
+	  }
+	  
+* When terraform runs, it will see that it first needs to spin up the databases1 instance, then generate the template, and only then spin up the web instances.
+* The web instance will have the template injected in the user_data and when it launces, the user-data will create a file "/etc/myapp.config" with the IP address of the database.
+
+
+### Other Providers:
+* Terraform supports other cloud providers like
+  * Google Cloud
+  * Azure
+  * Heroku
+  * Digital Ocean
+* And for on-premises / private cloud: use VMware vCloud / vSphere / OpenStack
+
+* It also involve in 
+  * Datadog - Monitoring
+  * GitHub - version control
+  * Mailgun - emailing (SMTP)
+  * DNSSimple / DNSMadeEasy / UltraDNS - DNS provider
+Full List: https://www.terraform.io/docs/providers/
+
+
+
+### Modules:
+
+* You can use modules to make your terraform more organized.
+* Use **third party** modules
+  * Modules from github
+* **Reuse** parts of your code
+  * e.g. to setup network in AWS - the Virtual Private Network (VPC)
+  
+* If you use module from github
+  
+        module "module-example" {
+          source = "github.com/bdas99/terraform-module-example"
+        }
+* If you wanted to use module from local folder.
+
+        module "module-example" {
+	  source = "./module-example"
+        }
+
+* Pass arguments to module like region, ip-range, cluster-size etc.
+
+        module "module-example" {
+	  source = "./module-example"
+	  region = "ap-south-1"
+	  ip-range = "10.0.0.0/8"
+	  cluster-size = "3"
+         }
+
+
+* Inside the module folder, you just have again terraform files: See the below module as example
+
+File: module-example/vars.tf
+
+        variable "region" {}  # the input parameters
+	variable "ip-range" {}
+	variable "cluster-size" {}
+
+File: module-example/cluster.tf
+
+        # vars can be used here
+	resource "aws_instance" "instance-1" {...}
+	resource "aws_instance" "instance-2" {...}
+	resource "aws_instance" "instance-3" {...}
+
+File: module-example/output.tf
+
+        output "aws-cluster" {
+	  value = "${aws_instance.instance-1.public_ip}, ${aws_instance.instance-2.public_ip}, ${aws_instance.instance-3.public_ip}"
+	}
+	
+	
+* Use the **output** from the module in the main part of your code:
+
+         output "some-output" {
+	   value = "${module.module-example.aws-cluster}"
+	  }
+
+We are using output resource here, but you can use the variables anywhere on the terraform code.
+
+
+### External Module:
+
+Try to run this external module: Steps -
+1) Copy all the files from externalModule Repo to your terraform host.
+2) Create keys - ssh-keygen -f mykey
+3) Run terraform get - this will download the external module from git. https://github.com/wardviaene/terraform-consul-module
+4) You can see those modules downloaded under .../.terraform/modules/consul
+5) Now spin up instance, terraform init -> plan -> apply -> destroy (destroy will terminate full cluster)
+
+
+### Terraform Command Overview:
+
+* Terraform is very much focused on the resource definition.
+* It has a **limited toolset** available to modigy, import, create these resource definition.
+* There is an external tool called **terraforming** that you can use for now, but it will take you quite time to convert your current infrastructure to managed terraform infrastructure (https://github.com/dtan4/terraforming)
+
+Commands:
+terraform apply - Applies state
+terraform destroy - Destroy all terraform managed state.
+terraform fmt - Rewrite terraform configuration files to a canonical format and style.
+terraform get - Download and update module
+terraform graph - Create a visual re-presentation of a configuration or execution plan
+terraform import [options] ADDRESS ID - Import will try and find the infrastructure resource identified with ID and import
+                                        the state into terraform.tfstate with resource id ADDRESS.
+terraform output [options] [NAME] - Output any of your resources. Using NAME will only output a specific resources.
+terraform plan - It shows the chages to be made to the infrastructure.
+terraform push - Push changes to Atlas, Hashicorp's Enterprise tool that can automatically run terraform from centralize server.
+terraform refresh - Refresh the remote state. Can identify differences between state file and remote state.
+terraform remote - Configure remote state storage.
+terraform show - It will show human readable output from a state or a plan.
+terraform state - Use this command for advance state management, e.g. Rename a resource with terraform state mv aws_instance.example aws_instance.production.
+terraform taint - Manually mark resource as tainted, meaning it will be destructed and recreated at the next apply.
+terraform validate - validate your terraform syntax
+terraform untaint - undo a taint.
 
 
