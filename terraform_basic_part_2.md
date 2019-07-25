@@ -525,6 +525,7 @@ We are using output resource here, but you can use the variables anywhere on the
 ### External Module:
 
 Try to run this external module: Steps -
+
 1) Copy all the files from externalModule Repo to your terraform host.
 2) Create keys - ssh-keygen -f mykey
 3) Run terraform get - this will download the external module from git. https://github.com/wardviaene/terraform-consul-module
@@ -539,22 +540,26 @@ Try to run this external module: Steps -
 * There is an external tool called **terraforming** that you can use for now, but it will take you quite time to convert your current infrastructure to managed terraform infrastructure (https://github.com/dtan4/terraforming)
 
 Commands:
-terraform apply - Applies state
-terraform destroy - Destroy all terraform managed state.
-terraform fmt - Rewrite terraform configuration files to a canonical format and style.
-terraform get - Download and update module
-terraform graph - Create a visual re-presentation of a configuration or execution plan
-terraform import [options] ADDRESS ID - Import will try and find the infrastructure resource identified with ID and import
+* terraform apply - Applies state
+* terraform destroy - Destroy all terraform managed state.
+* terraform fmt - Rewrite terraform configuration files to a canonical format and style.
+* terraform get - Download and update module
+* terraform graph - Create a visual re-presentation of a configuration or execution plan
+* terraform import [options] ADDRESS ID - Import will try and find the infrastructure resource identified with ID and import
                                         the state into terraform.tfstate with resource id ADDRESS.
-terraform output [options] [NAME] - Output any of your resources. Using NAME will only output a specific resources.
-terraform plan - It shows the chages to be made to the infrastructure.
-terraform push - Push changes to Atlas, Hashicorp's Enterprise tool that can automatically run terraform from centralize server.
-terraform refresh - Refresh the remote state. Can identify differences between state file and remote state.
-terraform remote - Configure remote state storage.
-terraform show - It will show human readable output from a state or a plan.
-terraform state - Use this command for advance state management, e.g. Rename a resource with terraform state mv aws_instance.example aws_instance.production.
-terraform taint - Manually mark resource as tainted, meaning it will be destructed and recreated at the next apply.
-terraform validate - validate your terraform syntax
-terraform untaint - undo a taint.
+* terraform output [options] [NAME] - Output any of your resources. Using NAME will only output a specific resources.
+* terraform plan - It shows the chages to be made to the infrastructure.
+* terraform push - Push changes to Atlas, Hashicorp's Enterprise tool that can automatically run terraform from centralize server.
+* terraform refresh - Refresh the remote state. Can identify differences between state file and remote state.
+* terraform remote - Configure remote state storage.
+* terraform show - It will show human readable output from a state or a plan.
+* terraform state - Use this command for advance state management, e.g. Rename a resource with terraform state mv aws_instance.example aws_instance.production.
+* terraform taint - Manually mark resource as tainted, meaning it will be destructed and recreated at the next apply.
+* terraform validate - validate your terraform syntax
+* terraform untaint - undo a taint.
 
+Use commands_TF repo and try some these commands. Remember it will create more than 3 instance including private & public subnet
+
+
+========== Here is the end of Terraform Basics ===========
 
