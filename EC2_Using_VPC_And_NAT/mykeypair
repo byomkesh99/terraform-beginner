@@ -1,0 +1,2 @@
+Create key pair with command ssh-keygen -f mykeypair.
+It should be password less passphrase
