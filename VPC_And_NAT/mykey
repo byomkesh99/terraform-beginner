@@ -1,0 +1,1 @@
+create mykey with ssh-keygen -f mykey
