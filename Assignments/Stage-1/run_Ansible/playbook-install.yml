@@ -1,0 +1,29 @@
+-
+  name: Reverse_Proxy
+  become: true
+  hosts: web1
+  tasks:
+    - name: Installing Nginx
+      apt: name=nginx state=present update_cache=yes
+
+-
+  name: Database
+  become: true
+  hosts: db1
+  tasks:
+    - name: Installing MySQL
+      apt: name=mysql state=present update_cache=yes
+
+-
+  name: Apps
+  become: true
+  hosts: app1
+  tasks:
+    - name: Installing Apache, Wordpress, PHP
+      apt: name='{{ item }}' state=present update_cache=yes
+      with_items:
+        - apache2
+        - php
+        - php-mysql
+        - wordpress
+        - libapache2-mod-php
